@@ -1,5 +1,4 @@
 
-
 import random
 import math
 import copy 
@@ -12,7 +11,7 @@ default_problems = {
 15:[(512, 317), (741, 72), (552, 50), (772, 346), (637, 12), (589, 131), (732, 165), (605, 15), (730, 38), (576, 216), (589, 381), (711, 387), (563, 228), (494, 22), (787, 288)]
 }
 
-def generate_random_population(cities_location: List[Tuple[float, float]], population_size: int, start_city_location: Tuple[float, float] = None) -> List[List[Tuple[float, float]]]:
+def generate_random_population(cities_location: List[Tuple[float, float]], population_size: int) -> List[List[Tuple[float, float]]]:
     """
     Generate a random population of routes for a given set of cities.
 
@@ -24,20 +23,7 @@ def generate_random_population(cities_location: List[Tuple[float, float]], popul
     Returns:
     List[List[Tuple[float, float]]]: A list of routes, where each route is represented as a list of city locations.
     """
-    population = []
-    if start_city_location:
-        remaining_cities = [city for city in cities_location if city != start_city_location]
-        
-        for _ in range(population_size):
-            shuffled_cities = random.sample(remaining_cities, len(remaining_cities))
-            route = [start_city_location] + shuffled_cities
-            population.append(route)
-    else:
-        # Se não houver cidade de início, gere a população como no código original.
-        for _ in range(population_size):
-            population.append(random.sample(cities_location, len(cities_location)))
-            
-    return population
+    return [random.sample(cities_location, len(cities_location)) for _ in range(population_size)]
 
 
 def calculate_distance(point1: Tuple[float, float], point2: Tuple[float, float]) -> float:
@@ -73,7 +59,7 @@ def calculate_fitness(path: List[Tuple[float, float]]) -> float:
     return distance
 
 
-def order_crossover(parent1: List[Tuple[float, float]], parent2: List[Tuple[float, float]], start_city=None) -> List[Tuple[float, float]]:
+def order_crossover(parent1: List[Tuple[float, float]], parent2: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
     """
     Perform order crossover (OX) between two parent sequences to create a child sequence.
 
@@ -87,21 +73,18 @@ def order_crossover(parent1: List[Tuple[float, float]], parent2: List[Tuple[floa
     length = len(parent1)
 
     # Choose two random indices for the crossover
-    start_index = random.randint(1, length - 1)
+    start_index = random.randint(0, length - 1)
     end_index = random.randint(start_index + 1, length)
 
     # Initialize the child with a copy of the substring from parent1
     child = parent1[start_index:end_index]
 
     # Fill in the remaining positions with genes from parent2
-    remaining_positions = [i for i in range(1, length) if i < start_index or i >= end_index]
-    remaining_genes = [gene for gene in parent2[1:] if gene not in child]
+    remaining_positions = [i for i in range(length) if i < start_index or i >= end_index]
+    remaining_genes = [gene for gene in parent2 if gene not in child]
 
     for position, gene in zip(remaining_positions, remaining_genes):
-        child.insert(position - start_index, gene)
-
-    if start_city:
-        child = [start_city] + child
+        child.insert(position, gene)
 
     return child
 
@@ -133,7 +116,7 @@ def order_crossover(parent1: List[Tuple[float, float]], parent2: List[Tuple[floa
 
 
 # TODO: implement a mutation_intensity and invert pieces of code instead of just swamping two. 
-def mutate(solution:  List[Tuple[float, float]], mutation_probability: float, start_city=None) ->  List[Tuple[float, float]]:
+def mutate(solution:  List[Tuple[float, float]], mutation_probability: float) ->  List[Tuple[float, float]]:
     """
     Mutate a solution by inverting a segment of the sequence with a given mutation probability.
 
@@ -154,10 +137,8 @@ def mutate(solution:  List[Tuple[float, float]], mutation_probability: float, st
             return solution
     
         # Select a random index (excluding the last index) for swapping
-        if len(solution) == 2:
-            index = random.randint(1, len(solution) - 1)
-        else:
-            index = random.randint(1, len(solution) - 2)
+        index = random.randint(0, len(solution) - 2)
+        
         # Swap the cities at the selected index and the next index
         mutated_solution[index], mutated_solution[index + 1] = solution[index + 1], solution[index]   
         
@@ -204,9 +185,9 @@ if __name__ == '__main__':
     MUTATION_PROBABILITY = 0.3
     cities_locations = [(random.randint(0, 100), random.randint(0, 100))
               for _ in range(N_CITIES)]
-    start_city = cities_locations[0]
+    
     # CREATE INITIAL POPULATION
-    population = generate_random_population(cities_locations, POPULATION_SIZE, start_city_location=start_city)
+    population = generate_random_population(cities_locations, POPULATION_SIZE)
 
     # Lists to store best fitness and generation for plotting
     best_fitness_values = []
@@ -246,5 +227,3 @@ if __name__ == '__main__':
         print('generation: ', generation)
         population = new_population
     
-
-

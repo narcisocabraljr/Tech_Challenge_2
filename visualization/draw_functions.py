@@ -6,36 +6,33 @@ Created on Fri Dec 22 16:03:11 2023
 """
 import pylab
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib
 import pygame
 from typing import List, Tuple
-import numpy as np
+
 matplotlib.use("Agg")
 
 
 def draw_plot(screen: pygame.Surface, x: list, y: list, x_label: str = 'Generation', y_label: str = 'Fitness') -> None:
-    """
-    Draw a plot on a Pygame screen using Matplotlib.
-    """
     fig, ax = plt.subplots(figsize=(4, 4), dpi=100)
-    ax.plot(x, y, color="blue")
+    ax.plot(x, y)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     plt.tight_layout()
 
+    # Renderiza a figura no canvas Agg
     canvas = FigureCanvasAgg(fig)
     canvas.draw()
+
+    # Pega os dados e tamanho direto do canvas (e não de fig.canvas!)
+    raw_data = canvas.buffer_rgba()
     size = canvas.get_width_height()
 
-    # Pega RGBA e converte para bytes
-    raw_data = canvas.buffer_rgba()
-    raw_bytes = raw_data.tobytes()
-    surf = pygame.image.frombuffer(raw_bytes, size, "RGBA")
-
+    # Converte em Surface do pygame
+    surf = pygame.image.frombuffer(raw_data, size, "RGBA")
     screen.blit(surf, (0, 0))
-    plt.close(fig)  # fecha a figura para liberar memória
+    plt.close(fig)
     
 def draw_cities(screen: pygame.Surface, cities_locations: List[Tuple[int, int]], rgb_color: Tuple[int, int, int], node_radius: int) -> None:
     """
@@ -87,4 +84,3 @@ def draw_text(screen: pygame.Surface, text: str, color: pygame.Color) -> None:
     text_position = (np.average(np.array(cities_locations)[:, 0]), HEIGHT - 1.5 * font_size)
     
     screen.blit(text_surface, text_position)
-

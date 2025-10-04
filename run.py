@@ -1,6 +1,5 @@
 import random
 from ga.genetic_algorithm import generate_random_population
-from ga.ga_utils import evaluate_population, sort_population_with_fitness
 from visualization.tsp import run_visualization  # caso você crie uma função main em tsp.py
 
 
