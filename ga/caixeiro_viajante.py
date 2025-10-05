@@ -18,6 +18,11 @@ SPEED = 50.0 # velocidade do veículo (unidades por tempo)
 SERVICE_TIME = 10.0 # tempo de serviço em cada cidade
 TIME_WINDOW_PENALTY_FACTOR = 5000.0 # fator de penalidade por unidade de tempo fora da janela
 
+# --- PARÂMETROS DA PAUSA PARA ALMOÇO ---
+LUNCH_BREAK_THRESHOLD = 250.0 # Tempo de trabalho antes da pausa obrigatória (X)
+LUNCH_BREAK_DURATION = 60.0   # Duração da pausa para almoço (Y)
+# ----------------------------------------
+
 # --- PARÂMETROS DE PRIORIDADE ---
 PRIORITY_LEVELS = [1, 2, 3] # 1: Baixa (Padrão), 3: Alta (Crítica)
 PRIORITY_PENALTY_FACTORS = {
@@ -61,6 +66,7 @@ def calculate_fitness(individual: Dict, city_time_windows: Dict) -> float:
     distance = 0.0
     time_penalty = 0.0
     current_time = 0.0
+    lunches_taken_count = 0 # Contador para múltiplas pausas
     
     # 1. Penalidade por excesso de carga (violação estrita)
     if total_load > MAX_CAPACITY:
@@ -70,6 +76,14 @@ def calculate_fitness(individual: Dict, city_time_windows: Dict) -> float:
     for i in range(n):
         city = route[i]
         
+        # 3. Lógica da Pausa para Almoço (Múltiplas Pausas)
+        # Calcula quantas pausas são devidas com base no tempo de trabalho.
+        breaks_due = int(current_time // LUNCH_BREAK_THRESHOLD)
+        if breaks_due > lunches_taken_count and i > 0: # Não tira pausa no depósito inicial
+            # Realiza todas as pausas pendentes (geralmente apenas uma por vez)
+            current_time += LUNCH_BREAK_DURATION * (breaks_due - lunches_taken_count)
+            lunches_taken_count = breaks_due
+
         # Obter o fator de penalidade com base na prioridade (padrão 1.0)
         priority_level = city_priority.get(city, 1)
         priority_factor = PRIORITY_PENALTY_FACTORS.get(priority_level, 1.0)
@@ -77,11 +91,11 @@ def calculate_fitness(individual: Dict, city_time_windows: Dict) -> float:
         if city in city_time_windows:
             start_w, end_w = city_time_windows[city]
             
-            # 2. Tratamento da Janela de Tempo (Espera se Chegar Cedo)
+            # 3. Tratamento da Janela de Tempo (Espera se Chegar Cedo)
             if current_time < start_w:
                 current_time = start_w  # Espera
                 
-            # 3. Tratamento da Janela de Tempo (Atraso/Penalidade)
+            # 4. Tratamento da Janela de Tempo (Atraso/Penalidade)
             if current_time > end_w:
                 delay = current_time - end_w
                 # APLICAR O FATOR DE PRIORIDADE À PENALIDADE
@@ -262,7 +276,7 @@ def main():
             best_solution, best_fitness = current_best, current_fitness
             
         draw_route(screen, current_best, generation, current_fitness, city_time_windows)
-        print(f"Geração {generation}: melhor fitness = {current_fitness:.2f}")
+        print(f"Geração {generation+1}: melhor fitness = {current_fitness:.2f}")
         
         new_population = [population[0]]
         while len(new_population) < POPULATION_SIZE:
