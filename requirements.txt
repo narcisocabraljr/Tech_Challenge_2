@@ -1,0 +1,10 @@
+streamlit
+streamlit-chat
+python-dotenv
+openai>=1.30.0
+langchain
+langchain-openai
+langchain-community
+chromadb
+pandas
+plotly

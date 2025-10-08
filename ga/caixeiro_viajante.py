@@ -4,6 +4,7 @@ import math
 import copy
 import pygame
 from typing import List, Tuple, Dict
+import matplotlib.pyplot as plt
 
 # -----------------------
 # Configurações principais
@@ -212,6 +213,28 @@ def calculate_vrp_fitness(individual: Dict, city_time_windows: Dict) -> float:
     # Fitness final
     return total_distance + total_penalty
 
+
+# -----------------------
+# Função para integração com LLM
+# -----------------------
+def gerar_instrucoes_motorista(best_solution: Dict, distancia_total: float) -> Dict[int, str]:
+    """
+    Recebe a melhor solução e retorna instruções detalhadas por veículo.
+    Retorna um dicionário: {vehicle_id: texto_instrucoes}
+    """
+    instrucoes = {}
+    for rinfo in best_solution["routes"]:
+        vid = rinfo["vehicle_id"]
+        route = rinfo["route"]
+        texto = f"Veículo {vid} deve seguir a rota com {len(route)-1} entregas (distância total aproximada: {distancia_total:.1f}).\n"
+        for i, city in enumerate(route):
+            if i == 0:
+                texto += f"  - Início no depósito {city}.\n"
+            else:
+                texto += f"  - Visitar cidade {city}, prioridade {best_solution['city_priority'].get(city, 1)}.\n"
+        texto += "Seguir janelas de tempo e pausas conforme necessário.\n"
+        instrucoes[vid] = texto
+    return instrucoes
 
 # -----------------------
 # Crossover para VRP
@@ -423,6 +446,69 @@ def compute_vrp_arrival_times_and_breaks(best_solution: Dict, city_time_windows:
     return vehicle_arrivals, vehicle_breaks
 
 # -----------------------
+# Plota o resultado do VRPTW de forma detalhada, integrando prioridades, janelas de tempo e atrasos.
+# -----------------------
+def plot_vrp_solution_detailed(solution: dict, arrivals: dict, breaks: dict, vehicle_colors=None):
+    """
+    Plota o resultado do VRPTW de forma detalhada, integrando prioridades, janelas de tempo e atrasos.
+    
+    solution: dict retornado pelo algoritmo (melhor solução)
+    arrivals: dict retornado por compute_vrp_arrival_times_and_breaks
+    breaks: dict retornado por compute_vrp_arrival_times_and_breaks
+    vehicle_colors: lista de cores para os veículos
+    """
+    if vehicle_colors is None:
+        vehicle_colors = ["#50B4FF", "#78FF78", "#FFA500", "#FF78B4"]
+
+    plt.figure(figsize=(14,10))
+
+    for route_info in solution["routes"]:
+        vid = route_info["vehicle_id"]
+        route = route_info["route"]
+        color = vehicle_colors[vid % len(vehicle_colors)]
+        
+        # Trajeto
+        xs = [c[0] for c in route]
+        ys = [c[1] for c in route]
+        plt.plot(xs, ys, color=color, linewidth=2, marker='o', markersize=6, label=f"Veículo {vid}")
+
+        # Distância aproximada da rota
+        total_dist = sum(math.hypot(xs[i]-xs[i+1], ys[i]-ys[i+1]) for i in range(len(xs)-1))
+        plt.text(xs[-1], ys[-1], f"{total_dist:.1f}", fontsize=10, color=color)
+
+        # Depósito em destaque
+        plt.scatter(xs[0], ys[0], color='red', s=120, marker='s', zorder=5)
+        plt.text(xs[0]+5, ys[0]+5, "Depósito", fontsize=9, color='red')
+
+        # Pausas (indicativo aproximado no depósito)
+        for b_start, b_end in breaks.get(vid, []):
+            plt.scatter(xs[0], ys[0], color='yellow', s=200, alpha=0.3, zorder=4)
+
+        # Prioridades e atrasos
+        for city in route[1:]:
+            arrival = arrivals[vid].get(city,0)
+            priority = solution["city_priority"].get(city, 1)
+            plt.scatter(city[0], city[1], s=20*priority, edgecolor='black', facecolor='none', linewidth=1, zorder=5)
+            plt.text(city[0]+5, city[1]+5, f"P{priority}", fontsize=8)
+
+            # janela de tempo
+            if "city_time_windows" in solution:
+                start, end = solution["city_time_windows"].get(city, (0,0))
+                plt.plot([city[0]-5, city[0]+5], [start, start], color='green', linewidth=1)  # início janela
+                plt.plot([city[0]-5, city[0]+5], [end, end], color='green', linewidth=1)      # fim janela
+
+                # atraso
+                if arrival > end:
+                    plt.scatter(city[0], city[1], color='red', s=50, marker='x', zorder=6)
+    
+    plt.title("Rotas dos Veículos - VRPTW (Detalhado)")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+# -----------------------
 # Loop principal
 # -----------------------
 def main():
@@ -504,8 +590,26 @@ def main():
             else:
                 print("Nenhuma pausa para este veículo.")
         print(f"\nFitness final (soma tudo): {best_fitness:.2f}")
+
+        # -----------------------
+        # Gera instruções detalhadas por veículo via LLM
+        # -----------------------
+        # calcula distância total aproximada para a LLM
+        distancia_total = sum(
+            calculate_distance(route[i], route[(i+1) % len(route)])
+            for rinfo in best_solution["routes"]
+            for route in [rinfo["route"]]
+            for i in range(len(route))
+        )
+        instrucoes = gerar_instrucoes_motorista(best_solution, distancia_total)
+        for vid, texto in instrucoes.items():
+            print(f"\nInstruções para veículo {vid}:\n{texto}\n")
     else:
         print("Nenhuma solução encontrada.")
+
+    best_solution["city_time_windows"] = city_time_windows  # necessário para o gráfico
+    plot_vrp_solution_detailed(best_solution, arrivals, breaks)
+
 
 if __name__ == "__main__":
     main()
