@@ -5,6 +5,7 @@ import copy
 import pygame
 from typing import List, Tuple, Dict
 import matplotlib.pyplot as plt
+import json
 
 # -----------------------
 # Configurações principais
@@ -601,14 +602,47 @@ def main():
             for route in [rinfo["route"]]
             for i in range(len(route))
         )
+
         instrucoes = gerar_instrucoes_motorista(best_solution, distancia_total)
         for vid, texto in instrucoes.items():
             print(f"\nInstruções para veículo {vid}:\n{texto}\n")
+		
+        best_solution["city_time_windows"] = city_time_windows  # necessário para o gráfico
+        plot_vrp_solution_detailed(best_solution, arrivals, breaks)
+
+        # Serializa city_demand e city_priority
+        city_demand_str = {f"{c[0]},{c[1]}": v for c, v in best_solution["city_demand"].items()}
+        city_priority_str = {f"{c[0]},{c[1]}": v for c, v in best_solution["city_priority"].items()}
+
+        # Rotas já convertidas para listas (não tuplas)
+        for rinfo in best_solution["routes"]:
+            rinfo["route"] = [list(c) for c in rinfo["route"]]
+
+        sol_serializable = copy.deepcopy(best_solution)
+        sol_serializable["city_demand"] = city_demand_str
+        sol_serializable["city_priority"] = city_priority_str
+        sol_serializable["city_time_windows"] = {f"{c[0]},{c[1]}": list(v) for c, v in city_time_windows.items()}
+
+        result_json = {
+            "melhor_fitness": best_fitness,
+            "distancia_total": distancia_total,
+            "melhor_solucao": sol_serializable,
+            "instrucoes_motoristas": instrucoes,
+            "parametros": {
+                "geracoes": N_GENERATIONS,
+                "populacao": POPULATION_SIZE,
+                "prob_mutacao": MUTATION_PROBABILITY,
+                "veiculos": VEHICLE_CAPACITIES
+            }
+        }
     else:
         print("Nenhuma solução encontrada.")
 
-    best_solution["city_time_windows"] = city_time_windows  # necessário para o gráfico
-    plot_vrp_solution_detailed(best_solution, arrivals, breaks)
+
+    # Salva resultado em arquivo JSON
+    output_path = "melhor_solucao.json"
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(result_json, f, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":
