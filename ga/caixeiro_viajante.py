@@ -29,6 +29,7 @@ TIME_WINDOW_PENALTY_FACTOR = 5000.0
 # Pausa para almoço
 LUNCH_BREAK_THRESHOLD = 250.0
 LUNCH_BREAK_DURATION = 60.0
+MAX_SHIFT_DURATION = 600.0  # Jornada máxima de trabalho por veículo
 
 # Prioridades
 PRIORITY_LEVELS = [1, 2, 3]
@@ -185,6 +186,11 @@ def calculate_vrp_fitness(individual: Dict, city_time_windows: Dict) -> float:
             travel_time = seg_dist / SPEED
             current_time += travel_time
             work_since_last_break += travel_time
+
+        # Penalidade por jornada de trabalho excedida
+        if current_time > MAX_SHIFT_DURATION:
+            overtime = current_time - MAX_SHIFT_DURATION
+            total_penalty += 1e5 + overtime * 1e3 # Penalidade alta + proporcional ao excesso
 
     # ----------------------------------------------------------------------
     # Penalidades e ajustes globais (aplicados após processar todos os veículos)
@@ -416,6 +422,9 @@ def compute_vrp_arrival_times_and_breaks(best_solution: Dict, city_time_windows:
                 travel_time = d / SPEED
                 current_time += travel_time
                 work_since_last_break += travel_time
+        
+        # # Armazena a duração total da rota no dicionário de chegadas
+        # arrival_times['__total_duration__'] = current_time
 
         vehicle_arrivals[vid] = arrival_times
         vehicle_breaks[vid] = lunch_breaks
@@ -476,6 +485,7 @@ def main():
             route = route_info["route"]
             load = route_info["total_load"]
             cap = route_info["capacity"]
+            total_route_time = arrivals[vid].get('__total_duration__', 0.0)
 
             print(f"\nVeículo {vid} (capacidade {cap}) - carga: {load}")
             print("Rota:")
@@ -484,7 +494,7 @@ def main():
                 arr = arrivals[vid].get(city, 0.0)
                 priority = best_solution["city_priority"].get(city, 1)
                 if i == 0:
-                    status = "depósito"
+                    status = "saída do depósito"
                 elif arr < tw[0]:
                     status = f"cedo (espera {tw[0]-arr:.1f})"
                 elif arr > tw[1]:
@@ -503,6 +513,13 @@ def main():
                     print(f"   - Pausa {idx}: {s:.1f} -> {e:.1f}")
             else:
                 print("Nenhuma pausa para este veículo.")
+            
+            # # Informação da jornada de trabalho
+            # shift_status = f"OK (dentro do limite de {MAX_SHIFT_DURATION:.1f})"
+            # if total_route_time > MAX_SHIFT_DURATION:
+            #     shift_status = f"EXCEDIDA (limite: {MAX_SHIFT_DURATION:.1f})"
+            # print(f"Jornada total do veículo: {total_route_time:.1f} | Status: {shift_status}")
+
         print(f"\nFitness final (soma tudo): {best_fitness:.2f}")
     else:
         print("Nenhuma solução encontrada.")
