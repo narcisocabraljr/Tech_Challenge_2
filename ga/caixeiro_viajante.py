@@ -485,7 +485,7 @@ def main():
             route = route_info["route"]
             load = route_info["total_load"]
             cap = route_info["capacity"]
-            total_route_time = arrivals[vid].get('__total_duration__', 0.0)
+            # total_route_time = arrivals[vid].get('__total_duration__', 0.0)
 
             print(f"\nVeículo {vid} (capacidade {cap}) - carga: {load}")
             print("Rota:")
