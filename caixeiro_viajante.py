@@ -3,6 +3,7 @@ import math
 import copy
 from typing import List, Tuple, Dict
 
+<<<<<<< Updated upstream
 # --- Parâmetros do problema ---
 N_CITIES = 20               # Número de cidades
 POPULATION_SIZE = 50
@@ -11,10 +12,68 @@ MUTATION_PROBABILITY = 0.3
 MAX_CAPACITY = 120            # Capacidade máxima do caixeiro
 CITY_COORD_MIN = 0           # coordenadas mínimas
 CITY_COORD_MAX = 1000        # coordenadas máximas
+=======
+# -----------------------
+# Configurações principais
+# -----------------------
+N_CITIES = 20              # inclui depósito como cidade 0
+POPULATION_SIZE = 60
+N_GENERATIONS = 160
+MUTATION_PROBABILITY = 0.35
+
+# Demanda / capacidades
+>>>>>>> Stashed changes
 MIN_DEMAND = 1
 MAX_DEMAND = 10
 
+<<<<<<< Updated upstream
 # --- Funções utilitárias ---
+=======
+# Veículos (3 veículos com capacidades diferentes)
+VEHICLE_COUNT = 3
+VEHICLE_CAPACITIES = [90, 110, 100]  # ajuste aqui se quiser outros valores
+
+# Movimento / tempo
+SPEED = 50.0            # unidades de distância por unidade de tempo
+SERVICE_TIME = 10.0     # tempo de atendimento por hospital
+TIME_WINDOW_PENALTY_FACTOR = 5000.0
+
+# Pausa para almoço
+LUNCH_BREAK_THRESHOLD = 250.0
+LUNCH_BREAK_DURATION = 60.0
+MAX_SHIFT_DURATION = 600.0  # Jornada máxima de trabalho por veículo
+
+# Prioridades
+PRIORITY_LEVELS = [1, 2, 3]
+PRIORITY_PENALTY_FACTORS = {1: 1.0, 2: 5.0, 3: 10.0}
+
+# Coordenadas
+CITY_COORD_MIN = 0
+CITY_COORD_MAX = 1000
+
+# -----------------------
+# Pygame (visual)
+# -----------------------
+SCREEN_WIDTH = 1300
+SCREEN_HEIGHT = 700
+MARGIN_X = 50
+MARGIN_Y = 50
+SCALE_X = (SCREEN_WIDTH - 2 * MARGIN_X) / CITY_COORD_MAX
+SCALE_Y = (SCREEN_HEIGHT - 2 * MARGIN_Y) / CITY_COORD_MAX
+FPS = 5
+
+# Colors for vehicles (distinct)
+VEHICLE_COLORS = [
+    (80, 180, 255),   # veículo 0 - azul
+    (120, 255, 120),  # veículo 1 - verde
+    (255, 165, 0),   # veículo 2 - laranja
+    (255, 120, 180),  # extras se necessário
+]
+
+# -----------------------
+# Utilitários
+# -----------------------
+>>>>>>> Stashed changes
 def calculate_distance(p1: Tuple[int,int], p2: Tuple[int,int]) -> float:
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
