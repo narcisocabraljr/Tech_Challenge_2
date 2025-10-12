@@ -12,16 +12,16 @@ import json
 # -----------------------
 N_CITIES = 20              # inclui depósito como cidade 0
 POPULATION_SIZE = 60
-N_GENERATIONS = 120
+N_GENERATIONS = 150
 MUTATION_PROBABILITY = 0.35
 
 # Demanda / capacidades
 MIN_DEMAND = 1
-MAX_DEMAND = 20
+MAX_DEMAND = 100
 
 # Veículos (3 veículos com capacidades diferentes)
 VEHICLE_COUNT = 3
-VEHICLE_CAPACITIES = [60, 80, 70]  # ajuste aqui se quiser outros valores
+VEHICLE_CAPACITIES = [90, 110, 100]  # ajuste aqui se quiser outros valores
 
 # Movimento / tempo
 SPEED = 50.0            # unidades de distância por unidade de tempo

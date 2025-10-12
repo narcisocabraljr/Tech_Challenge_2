@@ -1,9 +1,11 @@
 # llm_integration.py
 from openai import OpenAI
 import os
-
+from dotenv import load_dotenv
 # Carrega a API key do ambiente
-api_key = os.environ.get("OPENAI_API_KEY")
+#api_key = os.environ.get("OPENAI_API_KEY")
+load_dotenv()
+api_key = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 if not api_key:
     raise ValueError("Defina a variável de ambiente OPENAI_API_KEY antes de rodar.")
 
