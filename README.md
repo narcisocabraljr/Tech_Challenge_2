@@ -1,4 +1,4 @@
-# Python Pandas Application
+# Problema do Caixeiro Viajante - Algoritmo Genético Python
 
 Este projeto é uma aplicação Python que utiliza a biblioteca pygame para carregar e visualizar as rotas geradas pelo nosso código de algoritmo genético, que por sua vez utiliza várias outras bibliotecas para fazer os cálculos de crossover e gerar rotas otimizadas para o problema apresentado na proposta do projeto.
 
